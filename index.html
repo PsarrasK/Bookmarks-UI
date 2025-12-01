@@ -1,0 +1,257 @@
+<!DOCTYPE NETSCAPE-Bookmark-file-1>
+<head>
+  <meta charset="UTF-8">
+  <title>Project Bookmarks</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<style>
+body {
+      background-color: #121212;
+      color: #e0e0e0;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+	  mask-image: linear-gradient(to right, black 90%, transparent 100%);
+	  margin: unset;
+    }
+	
+	div#all_bookmarks {
+		display: flex;
+		flex-direction: column;
+		gap: 20px;
+	}
+
+    h3 {
+      cursor: pointer;
+      background-color: #2e2e2e;
+	  /*background: linear-gradient(to right, rgba(128,128,128,1) 0%, rgba(128,128,128,0) 30%);*/
+      padding: 8px 12px;
+      border-radius: 7px 0 0 0;
+      font-size: 1em;
+      margin: unset;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .icon {
+      display: inline-block;
+      width: 1em;
+      text-align: center;
+    }
+
+    a {
+      color: #80cbc4;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+      color: #4db6ac;
+    }
+
+    dl {
+	  margin: 0px;
+      padding: 0px 0 10px 30px;
+      border-left: 2px solid #333;
+	  border-bottom: 2px solid #333;
+      border-radius: 0 10px;
+	  display: flex;
+      row-gap: 10px;
+      flex-direction: column;
+    }
+	dl.top-level {
+	  border: none;
+	  margin-left: 0;
+	  padding: 0;
+	  row-gap: 0px;
+	}
+
+    dl.collapsed { display: none; }
+
+    h3.collapsed::before {transform: rotate(-90deg);}
+    h3::before {
+	  content: "▾";
+	  display: inline-block;
+	  transition: transform 0.2s ease;
+	}
+	
+	
+	h3.collapsed {
+      border-radius: 7px 0 0 7px;
+    }
+
+    dt {
+      margin: unset;
+    }
+	
+	a {
+	  display: list-item;
+	  list-style-type: disc;
+	  margin-left: 20px;
+	  color: #80cbc4;
+	  text-decoration: none;
+	  width: fit-content;
+	}
+	
+	p {
+	  margin: unset;
+	}
+	
+	.icon {
+	  display: inline-block;
+	  width: 1em;
+	  margin-right: 6px;
+	  text-align: center;
+	}
+	
+	.page-footer {
+      position: fixed;
+      height: 20px;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #2e2e2e;
+      padding: 8px 0;
+      z-index: 1000;
+    }
+
+    .info-icon {
+      position: absolute;
+      left: 10px;
+      cursor: pointer;
+      font-size: 18px;
+    }
+
+    .info-icon .tooltip {
+      visibility: hidden;
+      opacity: 0;
+      width: max-content;
+      max-width: 250px;
+      background-color: #333;
+      color: #fff;
+      text-align: center;
+      padding: 6px 8px;
+      border-radius: 4px;
+      position: absolute;
+      bottom: -1px;
+      left: -2px;
+      transition: opacity 0.2s ease-in-out;
+      font-size: 13px;
+      white-space: normal;
+    }
+
+    .info-icon:hover .tooltip {
+      visibility: visible;
+      opacity: 1;
+    }
+ </style>
+<body>
+  <div id="all_bookmarks"></div>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    // Since we have only one bookmark file
+    const files = [
+      "bookmarks/bookmarks.html"
+    ];
+
+    files.forEach((file, idx) => {
+      const $container = $(`<div id="bookmarks_${idx}" class="bookmark-section"></div>`);
+      $("#all_bookmarks").append($container);
+
+      $container.load(file, function() {
+        // Remove Netscape export boilerplate
+        $container.find("title").remove();
+        $container.find("h1:contains('Bookmarks')").remove();
+
+        // First <DL> becomes top-level
+        $container.find("dl").first().addClass("top-level");
+        const $topLevel = $container.find("dl.top-level");
+        if ($topLevel.length) {
+          $topLevel.replaceWith($topLevel.children());
+        }
+
+        // Parse filename for section title
+        const baseName = file.replace(/^.*\//, "").replace(/\.html$/i, "");
+        let sectionTitle = baseName;
+
+        const $favorites = $container.find('H3[PERSONAL_TOOLBAR_FOLDER="true"]');
+        if ($favorites.length) {
+          $favorites.text(`Bookmarks file`);
+          //(${sectionTitle})
+        }
+
+        // Make all links open in new tab
+        $container.find("a").attr("target", "_blank").attr("rel", "noopener noreferrer");
+
+        const $root = $container;
+
+        // Collapse folders after the first one
+        $root.find("dl").each(function(i) { if (i >= 1) $(this).addClass("collapsed"); });
+        $root.find("h3").each(function(i) { if (i >= 1) $(this).addClass("collapsed"); });
+
+		
+
+        // Toggle folders on click
+        $root.on("click", "h3", function() {
+          const $h3 = $(this);
+          let $dl = $h3.next("dl");
+		  
+          if ($dl.length === 0) {
+            const $dt = $h3.closest("dt");
+            if ($dt.length) $dl = $dt.nextAll("dl").first();
+          }
+          if ($dl && $dl.length) {
+            $dl.toggleClass("collapsed");
+            $h3.toggleClass("collapsed");
+          }
+		  
+		  if (!$dl.hasClass("collapsed")) {
+		  const hasLinks = $dl.find("a").length > 0;
+		  const hasSubfolders = $dl.find("h3").length > 0;
+
+		  if (!hasLinks && !hasSubfolders) {
+			// Only add once
+			if ($dl.find(".empty-msg").length === 0) {
+			  $dl.append(
+				`<p class="empty-msg" style="color:#777; margin-left:10px; font-style:italic;">
+				   (This folder has no bookmarks)
+				 </p>`
+			  );
+			}
+		  } else {
+			// Remove message if folder becomes non-empty
+			$dl.find(".empty-msg").remove();
+		  }
+		}
+        });
+      });
+    });
+
+    // Footer
+    $(function() {
+      const $footer = $('<div class="page-footer">');
+      const $info = $(`
+        <div class="info-icon">
+          <i class="fa fa-info-circle" aria-hidden="true"></i>
+          <div class="tooltip">
+            This page displays exported bookmarks files of projects.<br>
+            Created by Psarras Konstantinos (2025)
+			<a href="https://psarrask.github.io/Bookmarks-UI/index.html" target="_blank" rel="noopener noreferrer" style=" display: block; margin: 0 auto; ">Original project page</a><br>
+            <br><br>
+            Check your access to these pages by downloading and executing the following ps1 file via PowerShell.<br>
+            <a href="https://psarrask.github.io/Bookmarks-UI/tools/check_network_access.ps1" target="_blank" rel="noopener noreferrer" style=" display: block; margin: 0 auto; ">Check Network Access tool</a>
+           </div>
+        </div>
+      `);
+      const $text = $('<div>').text("");
+
+      $footer.append($info).append($text);
+      $("body").append($footer);
+    });
+  </script>
+</body>
